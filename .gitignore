@@ -13,8 +13,7 @@ local.properties
 .classpath
 
 # generated files
-bin
-gen
+target
 
 # OS related files
 .DS_Store
