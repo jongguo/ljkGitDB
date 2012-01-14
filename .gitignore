@@ -1,0 +1,22 @@
+.metadata
+
+tmp/**
+tmp/**/*
+*.tmp
+
+*.bak
+*.swp
+*~.nib
+*~
+local.properties
+*.jar
+.classpath
+
+# generated files
+bin
+gen
+
+# OS related files
+.DS_Store
+Thumbs.db
+Desktop.ini
