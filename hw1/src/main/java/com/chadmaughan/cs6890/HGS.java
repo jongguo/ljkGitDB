@@ -5,7 +5,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
@@ -23,6 +25,9 @@ public class HGS {
 
 	private static Logger logger = Logger.getLogger(HGS.class.getName());
 	
+	// keeps track of the maximum cardinality of the testing sets
+	private int maximumCardinality = -1;
+
 	/**
 	 * @param args
 	 */
@@ -59,14 +64,15 @@ public class HGS {
 		// representative set of selected tests
 		Set<Integer> representativeSet = new TreeSet<Integer>();
 		
-		// keeps track of the maximum cardinality of the testing sets
-		int maximumCardinality = -1;
-
 		// keeps track of the current cardinality we're processing (starts with 1)
 		int currentCardinality = 1;
 		
 		// read in the input file into the data structures
 		try {
+			
+			if(logger.isLoggable(Level.INFO))
+				logger.info("Reading file: " + input);
+			
 		    BufferedReader in = new BufferedReader(new FileReader(input));
 
 		    String line;
@@ -101,7 +107,7 @@ public class HGS {
 		    		maximumCardinality = testingSet.getTests().size();
 		    	
 		    	if(logger.isLoggable(Level.INFO))
-    				logger.info("Test count: " + testingSet.getTests().size());
+    				logger.info("Tests: " + testingSet.getTests().size() + ", " + testingSet.getTests());
 
     			data.add(testingSet);
 			}
@@ -113,7 +119,7 @@ public class HGS {
 		}
 		
 		if(logger.isLoggable(Level.INFO))
-			logger.info("Maximum cardinality: " + maximumCardinality);
+			logger.info("Maximum cardinality of testing sets: " + maximumCardinality);
 		
 		// sort the testing sets by cardinality
 		Collections.sort(data);
@@ -141,14 +147,82 @@ public class HGS {
 		
 		// now work your way up increasing cardinality by 1 until you've processed all testing sets
 		while(currentCardinality < maximumCardinality) {
+
+			currentCardinality++;
+
 			if(logger.isLoggable(Level.INFO))
 				logger.info("Processing cardinality: " + currentCardinality);
 
-			currentCardinality++;
+			List<Integer> tests = new ArrayList<Integer>();
+			for(TestingSet ts : data) {
+				if(ts.getTests().size() == currentCardinality && ts.isMarked() == false) {
+					tests.addAll(ts.getTests());
+				}
+			}
+
+			int nextTest = selectTest(currentCardinality, tests);
+			representativeSet.add(nextTest);
+			
+			boolean mayReduce = false;
+			for(TestingSet ts : data) {
+				if(ts.getTests().contains(nextTest)) {
+					ts.setMarked(true);
+					if(ts.getTests().size() == maximumCardinality) {
+						mayReduce = true;
+					}
+				}
+			}
+			
+			if(mayReduce) {
+				
+			}
 		}
+		
+		if(logger.isLoggable(Level.INFO))
+			logger.info("Representative set: " + representativeSet);
 	}
 	
 	private Integer selectTest(int cardinality, List<Integer> tests) {
-		return 0;
+		
+		if(logger.isLoggable(Level.INFO))
+			logger.info("Working with tests: " + tests);
+		
+		Map<Integer,Integer> counts = new HashMap<Integer, Integer>();
+		
+		// keep track of the test that has the mose 
+		int maxCount = -1;
+		
+		// get the counts of each individual test
+		for(Integer i : tests) {
+
+			int currentCount = counts.get(i) + 1;
+			counts.put(i, currentCount);
+
+			if(currentCount > maxCount)
+				maxCount = currentCount;
+		}
+		
+		if(logger.isLoggable(Level.INFO))
+			logger.info("Max count for cardinality " + cardinality + ": " + maxCount);
+
+		List<Integer> testList = new ArrayList<Integer>();
+		
+		for(int key : counts.keySet()) {
+			if(counts.get(key) == maxCount) {
+				if(logger.isLoggable(Level.INFO))
+					logger.info("Test " + key + " has max count " + maxCount);
+				testList.add(key);
+			}
+		}
+		
+		if(testList.size() == 1) {
+			return testList.get(0);
+		}
+		else if(cardinality == maximumCardinality) {
+			return testList.get(0);
+		}
+		else {
+			return selectTest(cardinality + 1, testList);
+		}
 	}
 }
