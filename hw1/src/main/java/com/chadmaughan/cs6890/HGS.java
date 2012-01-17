@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringTokenizer;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -80,25 +79,29 @@ public class HGS {
 		    String line;
 		    while ((line = in.readLine()) != null) {
 
-		    	StringTokenizer tokenizer = new StringTokenizer(line, "\t");
+			    // not all the input files where tab delimited, changed to white space regular expression
+		    	String[] parts = line.split("\\s+");
 		    	int column = 0;
 		    	
 		    	// each line is a testing set (T_n) for requirement (r_n) contains multiple tests (t_1 ... t_n)
 		    	TestingSet testingSet = new TestingSet();
 		    	testingSet.setTests(new ArrayList<Integer>());
 
-		    	while (tokenizer.hasMoreTokens()) {
+		    	for(String part : parts) {
+
+		    		part = part.trim();
+		    		
+	    			int number = Integer.parseInt(part);
 
 		    		// first column in input files is the requirement number
 		    		if(column == 0) {
-		    			int number = Integer.parseInt(tokenizer.nextToken());
 				    	testingSet.setNumber(number);
 		    			if(logger.isLoggable(Level.INFO))
 		    				logger.info("Parsed testing set (requirement) number: " + testingSet.getNumber());
 		    		}
 		    		else {
 		    			// add each test to the collection of 
-		    			testingSet.getTests().add(Integer.parseInt(tokenizer.nextToken()));
+		    			testingSet.getTests().add(number);
 		    		}
 		    		
 		    		column++;
@@ -209,6 +212,8 @@ public class HGS {
 	
 	private Integer selectTest(int cardinality, List<Integer> tests) {
 		
+		Collections.sort(tests);
+		
 		if(logger.isLoggable(Level.INFO))
 			logger.info("Working with cardinality " + cardinality + " and tests: " + tests);
 		
@@ -228,6 +233,8 @@ public class HGS {
 				currentCount = counts.get(i) + 1;
 			}
 			
+			if(logger.isLoggable(Level.INFO))
+				logger.info("Test count for test: " + i + " now at: " + currentCount);
 			counts.put(i, currentCount);
 
 			if(currentCount > maxCount)
@@ -251,6 +258,8 @@ public class HGS {
 			return testList.get(0);
 		}
 		else if(cardinality == maximumCardinality) {
+			// TODO - change to random instead of first
+			logger.warning("BREAKING TIE");
 			return testList.get(0);
 		}
 		else {
