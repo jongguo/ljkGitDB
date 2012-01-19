@@ -8,7 +8,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -28,6 +28,8 @@ public class HGS {
 	
 	// keeps track of the maximum cardinality of the testing sets
 	private int maximumCardinality = -1;
+
+	private List<TestingSet> data;
 
 	/**
 	 * @param args
@@ -60,10 +62,11 @@ public class HGS {
 	public HGS(String input) {
 
 		// use a hash map to store the data imported from the file
-		List<TestingSet> data = new ArrayList<TestingSet>();
+		data = new ArrayList<TestingSet>();
 
 		// representative set of selected tests (from all testing sets)
-		Set<Integer> representativeSet = new TreeSet<Integer>();
+		SortedSet<Integer> representativeSet = new TreeSet<Integer>();
+		SortedSet<Integer> allSet = new TreeSet<Integer>();
 		
 		// keeps track of the current cardinality we're processing (starts with 1)
 		int currentCardinality = 1;
@@ -102,6 +105,9 @@ public class HGS {
 		    		else {
 		    			// add each test to the collection of 
 		    			testingSet.getTests().add(number);
+		    			
+		    			// keep track of total unique sets for reduction calculations
+		    			allSet.add(number);
 		    		}
 		    		
 		    		column++;
@@ -159,8 +165,7 @@ public class HGS {
 			if(logger.isLoggable(Level.INFO))
 				logger.info("Processing cardinality: " + currentCardinality);
 
-			// this needs to be a list (not a set) because we have to calculate the most used individual test
-			List<Integer> tests = new ArrayList<Integer>();
+			SortedSet<Integer> tests = new TreeSet<Integer>();
 			for(TestingSet ts : data) {
 				if(ts.getCardinality() == currentCardinality && ts.isMarked() == false) {
 					if(logger.isLoggable(Level.INFO))
@@ -169,50 +174,53 @@ public class HGS {
 				}
 			}
 
-			int nextTest = selectTest(currentCardinality, tests);
-			representativeSet.add(nextTest);
-			if(logger.isLoggable(Level.INFO))
-				logger.info("Added selected test, representative test set now: " + representativeSet);
-			
-			boolean mayReduce = false;
-			for(TestingSet ts : data) {
-				if(ts.getTests().contains(nextTest)) {
-					ts.setMarked(true);
-					if(ts.getCardinality() == maximumCardinality) {
-						mayReduce = true;
-					}
-				}
-			}
-			
-			if(mayReduce) {
-				
+			if(tests.size() > 0) {
+				int nextTest = selectTest(currentCardinality, tests);
+				representativeSet.add(nextTest);
 				if(logger.isLoggable(Level.INFO))
-					logger.info("Attempting to reduce");
+					logger.info("Added selected test " + nextTest + ", representative test set now: " + representativeSet);
 				
-				int max = -1;
+				boolean mayReduce = false;
 				for(TestingSet ts : data) {
-					if(!ts.isMarked()) {
-						if(ts.getCardinality() > max) {
-							max = ts.getCardinality();
-							if(logger.isLoggable(Level.INFO))
-								logger.info("New max: " + max + " from testing set (requirement): " + ts.getNumber());
+					if(ts.getTests().contains(nextTest)) {
+						ts.setMarked(true);
+						if(ts.getCardinality() == maximumCardinality) {
+							mayReduce = true;
 						}
 					}
 				}
 				
-				maximumCardinality = max;
-				if(logger.isLoggable(Level.INFO))
-					logger.info("New maximum cardinality set: " + maximumCardinality);
+				if(mayReduce) {
+					
+					if(logger.isLoggable(Level.INFO))
+						logger.info("Attempting to reduce");
+					
+					int max = 0;
+					for(TestingSet ts : data) {
+						if(!ts.isMarked()) {
+							if(ts.getCardinality() > max) {
+								max = ts.getCardinality();
+								if(logger.isLoggable(Level.INFO))
+									logger.info("New max: " + max + " from testing set (requirement): " + ts.getNumber());
+							}
+						}
+					}
+					
+					maximumCardinality = max;
+					if(logger.isLoggable(Level.INFO))
+						logger.info("New maximum cardinality set: " + maximumCardinality);
+				}
 			}
 		}
-		
+
 		if(logger.isLoggable(Level.INFO))
-			logger.info("Representative set: " + representativeSet);
+			logger.info("All set: " + allSet.size() + " - " + allSet);
+
+		if(logger.isLoggable(Level.INFO))
+			logger.info("Representative set: " + representativeSet.size() + " - " + representativeSet);
 	}
 	
-	private Integer selectTest(int cardinality, List<Integer> tests) {
-		
-		Collections.sort(tests);
+	private Integer selectTest(int cardinality, SortedSet<Integer> tests) {
 		
 		if(logger.isLoggable(Level.INFO))
 			logger.info("Working with cardinality " + cardinality + " and tests: " + tests);
@@ -220,47 +228,46 @@ public class HGS {
 		Map<Integer,Integer> counts = new HashMap<Integer, Integer>();
 		
 		// keep track of the test that has the most 
-		int maxCount = -1;
+		int maxTestingSetCoverageCount = -1;
 		
 		// get the counts of each individual test
 		for(Integer i : tests) {
 
-			int currentCount = 0;
+			int currentTestingSetCoverageCount = 0;
 			if(counts.get(i) == null) {
-				currentCount = 1;
+				currentTestingSetCoverageCount = 1;
 			}
 			else {
-				currentCount = counts.get(i) + 1;
+				currentTestingSetCoverageCount = counts.get(i) + 1;
 			}
 			
 			if(logger.isLoggable(Level.INFO))
-				logger.info("Test count for test: " + i + " now at: " + currentCount);
-			counts.put(i, currentCount);
+				logger.info("Testing set coverage count for test: " + i + " now at: " + currentTestingSetCoverageCount);
+			counts.put(i, currentTestingSetCoverageCount);
 
-			if(currentCount > maxCount)
-				maxCount = currentCount;
+			if(currentTestingSetCoverageCount > maxTestingSetCoverageCount)
+				maxTestingSetCoverageCount = currentTestingSetCoverageCount;
 		}
 		
 		if(logger.isLoggable(Level.INFO))
-			logger.info("Maximum individual test count for cardinality " + cardinality + ": " + maxCount);
-
-		List<Integer> testList = new ArrayList<Integer>();
+			logger.info("Maximum testing set coverage count for cardinality " + cardinality + ": " + maxTestingSetCoverageCount);
+		
+		SortedSet<Integer> testList = new TreeSet<Integer>();
 		
 		for(int key : counts.keySet()) {
-			if(counts.get(key) == maxCount) {
+			if(counts.get(key) == maxTestingSetCoverageCount) {
 				if(logger.isLoggable(Level.INFO))
-					logger.info("Test set: " + key + " has individual test count: " + maxCount);
+					logger.info("Test set: " + key + " has individual test count: " + maxTestingSetCoverageCount);
 				testList.add(key);
 			}
 		}
 		
 		if(testList.size() == 1) {
-			return testList.get(0);
+			return testList.first();
 		}
 		else if(cardinality == maximumCardinality) {
 			// TODO - change to random instead of first
-			logger.warning("BREAKING TIE");
-			return testList.get(0);
+			return testList.first();
 		}
 		else {
 			return selectTest(cardinality + 1, testList);
