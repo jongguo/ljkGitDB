@@ -3,14 +3,13 @@ package com.chadmaughan.cs6890;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.chadmaughan.cs6890.model.TestingSet;
+import com.chadmaughan.cs6890.model.Branch;
 
 public class RepresentativeSetTest {
 
@@ -20,52 +19,55 @@ public class RepresentativeSetTest {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		int[] tests = { 0, 1, 8, 15, 16, 17, 18, 19, 20, 21, 22, 30, 32, 35, 41, 43, 49, 52, 54, 56, 71, 83 };
+		int[] tests = { 0, 1, 2, 3, 4, 7, 8, 10, 12, 14, 20, 24, 26, 27, 53 };
 		new RepresentativeSetTest("/Users/chadmaughan/workspaces/school/cs6890-testing/hw1/src/main/resources/data/Input1C.txt", tests);
 	}
 
 	public RepresentativeSetTest(String input, int[] tests) {
 
 		try {
-			List<TestingSet> data = new ArrayList<TestingSet>();
+			Map<Integer,Branch> data = new HashMap<Integer,Branch>();
 	
-			// read in the file
 		    BufferedReader in = new BufferedReader(new FileReader(input));
-	
+
 		    String line;
 		    while ((line = in.readLine()) != null) {
-	
+
 			    // not all the input files where tab delimited, changed to white space regular expression
 		    	String[] parts = line.split("\\s+");
 		    	int column = 0;
+
+		    	int testCase = -1;
 		    	
-		    	// each line is a testing set (T_n) for requirement (r_n) contains multiple tests (t_1 ... t_n)
-		    	TestingSet testingSet = new TestingSet();
-		    	testingSet.setTests(new ArrayList<Integer>());
-	
 		    	for(String part : parts) {
-	
+
 		    		part = part.trim();
 		    		
 	    			int number = Integer.parseInt(part);
-	
+
 		    		// first column in input files is the requirement number
 		    		if(column == 0) {
-				    	testingSet.setNumber(number);
+				    	testCase = number;
 		    			if(logger.isLoggable(Level.INFO))
-		    				logger.info("Parsed testing set (requirement) number: " + testingSet.getNumber());
+		    				logger.info("Parsed testCase number: " + testCase);
 		    		}
 		    		else {
+		    			
+		    			Branch branch = data.get(number);
+		    			if(branch == null) {
+		    				branch = new Branch(number, new TreeSet<Integer>());
+		    				data.put(number, branch);
+		    			}
+		    			
 		    			// add each test to the collection of 
-		    			testingSet.getTests().add(number);	    			
+		    			branch.getTests().add(testCase);
+		    			
 		    		}
 		    		
 		    		column++;
 		    	}
-				
-				data.add(testingSet);
-			}
-		
+		    }
+		    		
 		    in.close();
 		    
 			// check each test suite to make sure it is covered by 
@@ -74,17 +76,17 @@ public class RepresentativeSetTest {
 		    int coveredCount = 0;
 		    int notCoveredCount = 0;
 		    
-		    for(TestingSet ts : data) {
+		    for(Branch branch : data.values()) {
 		    	boolean covered = false;
 
 		    	for(int i : tests) {
-		    		if(ts.getTests().contains(i)) {
+		    		if(branch.getTests().contains(i)) {
 		    			covered = true;
 		    			break;
 		    		}
 		    	}
 
-		    	coverage.put(ts.getNumber(), covered);
+		    	coverage.put(branch.getNumber(), covered);
 		    	
 		    	if(covered) {
 		    		coveredCount++;
