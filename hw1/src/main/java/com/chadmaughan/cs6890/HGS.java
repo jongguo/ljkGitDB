@@ -50,8 +50,10 @@ public class HGS {
 				new HGS(f);
 			}
 			else {
+				System.out.println(System.getProperty("line.separator") + "Missing input file.  See usage below." + System.getProperty("line.separator"));
 				HelpFormatter formatter = new HelpFormatter();
 				formatter.printHelp( "HSG", options );
+				System.out.println(System.getProperty("line.separator") + "example: java -jar chadmaughan-hw1.jar -f input-file.txt" + System.getProperty("line.separator"));
 			}
 		}
 		catch (ParseException e) {
@@ -159,9 +161,26 @@ public class HGS {
 		// now work your way up increasing cardinality by 1 until you've processed all testing sets
 		while(currentCardinality < maximumCardinality) {
 
-			// on first loop, should be two as all single cardinality tests are already processed
-			currentCardinality++;
+			// only increment to next cardinality if all testing sets of the current cardinality are satisfied
+			boolean allSatisfied = true;
+			
+			for(TestingSet ts : data) {
+				if(ts.getCardinality() == currentCardinality) {
+					if(!ts.isMarked()) {
+						allSatisfied = false;
+					}
+				}
+			}
 
+			if(allSatisfied) {
+				// on first loop, should be two as all single cardinality tests are already processed
+				currentCardinality++;
+			}
+			else {
+				if(logger.isLoggable(Level.INFO))
+					logger.info("Staying on current cardinality as all testing sets are not satisfied: " + currentCardinality);
+			}
+			
 			if(logger.isLoggable(Level.INFO))
 				logger.info("Processing cardinality: " + currentCardinality);
 
@@ -174,7 +193,9 @@ public class HGS {
 				}
 			}
 
+			// there might not be any testing sets of the cardinality we're currently working on
 			if(tests.size() > 0) {
+				
 				int nextTest = selectTest(currentCardinality, tests);
 				representativeSet.add(nextTest);
 				if(logger.isLoggable(Level.INFO))
@@ -210,6 +231,10 @@ public class HGS {
 					if(logger.isLoggable(Level.INFO))
 						logger.info("New maximum cardinality set: " + maximumCardinality);
 				}
+			}
+			else {
+				if(logger.isLoggable(Level.INFO))
+					logger.info("No testing sets of cardinality: " + currentCardinality);
 			}
 		}
 

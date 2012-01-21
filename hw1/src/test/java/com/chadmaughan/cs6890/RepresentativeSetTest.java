@@ -20,6 +20,8 @@ public class RepresentativeSetTest {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		int[] tests = { 0, 1, 8, 15, 16, 17, 18, 19, 20, 21, 22, 30, 32, 35, 41, 43, 49, 52, 54, 56, 71, 83 };
+		new RepresentativeSetTest("/Users/chadmaughan/workspaces/school/cs6890-testing/hw1/src/main/resources/data/Input1C.txt", tests);
 	}
 
 	public RepresentativeSetTest(String input, int[] tests) {
