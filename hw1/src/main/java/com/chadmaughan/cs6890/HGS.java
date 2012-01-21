@@ -3,12 +3,10 @@ package com.chadmaughan.cs6890;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -20,16 +18,16 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 
-import com.chadmaughan.cs6890.model.TestingSet;
+import com.chadmaughan.cs6890.model.Branch;
 
 public class HGS {
 
 	private static Logger logger = Logger.getLogger(HGS.class.getName());
 	
-	// keeps track of the maximum cardinality of the testing sets
+	// keeps track of the maximum cardinality of the branches
 	private int maximumCardinality = -1;
 
-	private List<TestingSet> data;
+	private Map<Integer,Branch> data;
 
 	/**
 	 * @param args
@@ -64,7 +62,7 @@ public class HGS {
 	public HGS(String input) {
 
 		// use a hash map to store the data imported from the file
-		data = new ArrayList<TestingSet>();
+		data = new TreeMap<Integer,Branch>();
 
 		// representative set of selected tests (from all testing sets)
 		SortedSet<Integer> representativeSet = new TreeSet<Integer>();
@@ -87,11 +85,9 @@ public class HGS {
 			    // not all the input files where tab delimited, changed to white space regular expression
 		    	String[] parts = line.split("\\s+");
 		    	int column = 0;
-		    	
-		    	// each line is a testing set (T_n) for requirement (r_n) contains multiple tests (t_1 ... t_n)
-		    	TestingSet testingSet = new TestingSet();
-		    	testingSet.setTests(new ArrayList<Integer>());
 
+		    	int testCase = -1;
+		    	
 		    	for(String part : parts) {
 
 		    		part = part.trim();
@@ -100,13 +96,20 @@ public class HGS {
 
 		    		// first column in input files is the requirement number
 		    		if(column == 0) {
-				    	testingSet.setNumber(number);
+				    	testCase = number;
 		    			if(logger.isLoggable(Level.INFO))
-		    				logger.info("Parsed testing set (requirement) number: " + testingSet.getNumber());
+		    				logger.info("Parsed testCase number: " + testCase);
 		    		}
 		    		else {
+		    			
+		    			Branch branch = data.get(number);
+		    			if(branch == null) {
+		    				branch = new Branch(number, new TreeSet<Integer>());
+		    				data.put(number, branch);
+		    			}
+		    			
 		    			// add each test to the collection of 
-		    			testingSet.getTests().add(number);
+		    			branch.getTests().add(testCase);
 		    			
 		    			// keep track of total unique sets for reduction calculations
 		    			allSet.add(number);
@@ -114,59 +117,57 @@ public class HGS {
 		    		
 		    		column++;
 		    	}
-    			
-		    	// track the maximum cardinality (so we know when to stop)
-		    	if(testingSet.getTests().size() > maximumCardinality)
-		    		maximumCardinality = testingSet.getTests().size();
-		    	
-		    	if(logger.isLoggable(Level.INFO))
-    				logger.info("Tests: " + testingSet.getTests().size() + ", " + testingSet.getTests());
-
-    			data.add(testingSet);
-			}
-		
+		    }
+		    		
 		    in.close();
 		} 
 		catch (IOException e) {
 			logger.log(Level.SEVERE, "Error reading input file: " + input, e);
 		}
 		
+    	// get the maximum cardinality (so we know when to stop)
+	    for(Branch branch : data.values()) {
+	    	if(branch.getTests().size() > maximumCardinality)
+	    		maximumCardinality = branch.getTests().size();
+		}
+
 		if(logger.isLoggable(Level.INFO))
 			logger.info("Maximum cardinality of testing sets: " + maximumCardinality);
 		
-		// sort the testing sets by cardinality
-		Collections.sort(data);
-		
-		// first process all testing sets that have exactly one test
-		for(TestingSet ts : data) {
+		// first process all branches that have exactly one test
+		for(Branch branch : data.values()) {
 
 			// only process those that have cardinality of 1
 			//  break out of loop for efficiency
-			if(ts.getCardinality() > 1) {
+			if(branch.getCardinality() > 1) {
 				if(logger.isLoggable(Level.INFO))
-					logger.info("Breaking from single cardinality on testing set (requirement) number: " + ts.getNumber() + ", " + ts.getTests());
+					logger.info("Breaking from single cardinality on testing set (requirement) number: " + branch.getNumber() + ", " + branch.getTests());
 				break;
 			}
 			else {
-				ts.setMarked(true);
-				representativeSet.addAll(ts.getTests());
+				branch.setMarked(true);
+				representativeSet.addAll(branch.getTests());
 				if(logger.isLoggable(Level.INFO))
-					logger.info("Adding tests: " + ts.getTests());
+					logger.info("Adding tests: " + branch.getTests());
 			}
 		}
 		
 		if(logger.isLoggable(Level.INFO))
 			logger.info("Representative tests after single cardinality insert: " + representativeSet);
 		
-		// now work your way up increasing cardinality by 1 until you've processed all testing sets
+		for(Branch ts : data.values()) {
+			logger.info(ts.getNumber() + ", " + ts.getTests());
+		}
+		
+		// now work your way up increasing cardinality by 1 until you've processed all branches
 		while(currentCardinality < maximumCardinality) {
 
-			// only increment to next cardinality if all testing sets of the current cardinality are satisfied
+			// only increment to next cardinality if all branches of the current cardinality are satisfied
 			boolean allSatisfied = true;
 			
-			for(TestingSet ts : data) {
-				if(ts.getCardinality() == currentCardinality) {
-					if(!ts.isMarked()) {
+			for(Branch branch : data.values()) {
+				if(branch.getCardinality() == currentCardinality) {
+					if(!branch.isMarked()) {
 						allSatisfied = false;
 					}
 				}
@@ -185,11 +186,11 @@ public class HGS {
 				logger.info("Processing cardinality: " + currentCardinality);
 
 			SortedSet<Integer> tests = new TreeSet<Integer>();
-			for(TestingSet ts : data) {
-				if(ts.getCardinality() == currentCardinality && ts.isMarked() == false) {
+			for(Branch branch : data.values()) {
+				if(branch.getCardinality() == currentCardinality && branch.isMarked() == false) {
 					if(logger.isLoggable(Level.INFO))
-						logger.info("Testing set (requirement) number " + ts.getNumber() + " has matching cardinality and is not marked, adding tests: " + ts.getTests());
-					tests.addAll(ts.getTests());
+						logger.info("Testing set (requirement) number " + branch.getNumber() + " has matching cardinality and is not marked, adding tests: " + branch.getTests());
+					tests.addAll(branch.getTests());
 				}
 			}
 
@@ -202,10 +203,10 @@ public class HGS {
 					logger.info("Added selected test " + nextTest + ", representative test set now: " + representativeSet);
 				
 				boolean mayReduce = false;
-				for(TestingSet ts : data) {
-					if(ts.getTests().contains(nextTest)) {
-						ts.setMarked(true);
-						if(ts.getCardinality() == maximumCardinality) {
+				for(Branch branch : data.values()) {
+					if(branch.getTests().contains(nextTest)) {
+						branch.setMarked(true);
+						if(branch.getCardinality() == maximumCardinality) {
 							mayReduce = true;
 						}
 					}
@@ -217,12 +218,12 @@ public class HGS {
 						logger.info("Attempting to reduce");
 					
 					int max = 0;
-					for(TestingSet ts : data) {
-						if(!ts.isMarked()) {
-							if(ts.getCardinality() > max) {
-								max = ts.getCardinality();
+					for(Branch branch : data.values()) {
+						if(!branch.isMarked()) {
+							if(branch.getCardinality() > max) {
+								max = branch.getCardinality();
 								if(logger.isLoggable(Level.INFO))
-									logger.info("New max: " + max + " from testing set (requirement): " + ts.getNumber());
+									logger.info("New max: " + max + " from testing set (requirement): " + branch.getNumber());
 							}
 						}
 					}
@@ -238,11 +239,9 @@ public class HGS {
 			}
 		}
 
-		if(logger.isLoggable(Level.INFO))
-			logger.info("All set: " + allSet.size() + " - " + allSet);
-
-		if(logger.isLoggable(Level.INFO))
-			logger.info("Representative set: " + representativeSet.size() + " - " + representativeSet);
+		System.out.println("");
+		System.out.println("Branches: " + allSet.size() + " (unique count) - " + allSet);
+		System.out.println("Representative set: " + representativeSet.size() + " (reduced size) - " + representativeSet);
 	}
 	
 	private Integer selectTest(int cardinality, SortedSet<Integer> tests) {
@@ -267,7 +266,7 @@ public class HGS {
 			}
 			
 			if(logger.isLoggable(Level.INFO))
-				logger.info("Testing set coverage count for test: " + i + " now at: " + currentTestingSetCoverageCount);
+				logger.info("Branch coverage count for test: " + i + " now at: " + currentTestingSetCoverageCount);
 			counts.put(i, currentTestingSetCoverageCount);
 
 			if(currentTestingSetCoverageCount > maxTestingSetCoverageCount)
@@ -275,14 +274,14 @@ public class HGS {
 		}
 		
 		if(logger.isLoggable(Level.INFO))
-			logger.info("Maximum testing set coverage count for cardinality " + cardinality + ": " + maxTestingSetCoverageCount);
+			logger.info("Maximum branch coverage count for cardinality " + cardinality + ": " + maxTestingSetCoverageCount);
 		
 		SortedSet<Integer> testList = new TreeSet<Integer>();
 		
 		for(int key : counts.keySet()) {
 			if(counts.get(key) == maxTestingSetCoverageCount) {
 				if(logger.isLoggable(Level.INFO))
-					logger.info("Test set: " + key + " has individual test count: " + maxTestingSetCoverageCount);
+					logger.info("Branch: " + key + " has individual test count: " + maxTestingSetCoverageCount);
 				testList.add(key);
 			}
 		}
@@ -291,7 +290,7 @@ public class HGS {
 			return testList.first();
 		}
 		else if(cardinality == maximumCardinality) {
-			// TODO - change to random instead of first
+			// "random" for this algorithm implementation takes first in test list
 			return testList.first();
 		}
 		else {

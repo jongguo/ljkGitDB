@@ -1,31 +1,40 @@
 package com.chadmaughan.cs6890.model;
 
-import java.util.List;
+import java.util.Set;
+import java.util.SortedSet;
 
-public class TestingSet implements Comparable<TestingSet> {
+public class Branch implements Comparable<Branch> {
 
 	/**
-	 * Each testing set is referenced by an integer in
-	 * the first column of each line of the input file
+	 * Each branch of code is referenced by an integer in
+	 * columns of each line of the input file
 	 * 
-	 * Example line: (number = 1)
+	 * Example line: (numbers = 21, 29, 18 ... 38)
 	 * 1	21	29	18	30	31	32	33	18	34	18	1	3	1	4	35	36	37	38
 	 */
 	private int number;
 
 	/**
-	 * Tests are also referenced by an integer in columns > 2
+	 * Tests are also referenced by an integer in column = 1
 	 * in each line of the input file
 	 * 
-	 * Example line: (tests are 51,46,24,21,24,25)
+	 * Example line: (tests is 5)
 	 * 5	51	46	24	21	24	25
 	 */
-	private List<Integer> tests;
+	private SortedSet<Integer> tests;
 	
 	/**
-	 * Whether the testing set 
+	 * Whether the testing set has been satisfied 
 	 */
 	private boolean marked;
+	
+	public Branch() {	
+	}
+	
+	public Branch(int number, SortedSet<Integer> tests) {
+		this.number = number;
+		this.tests = tests;
+	}
 	
 	/**
 	 * Returns the count (int) of the number of tests
@@ -57,15 +66,15 @@ public class TestingSet implements Comparable<TestingSet> {
 		this.number = number;
 	}
 	
-	public List<Integer> getTests() {
+	public Set<Integer> getTests() {
 		return tests;
 	}
 	
-	public void setTests(List<Integer> tests) {
+	public void setTests(SortedSet<Integer> tests) {
 		this.tests = tests;
 	}
 
-	public int compareTo(TestingSet other) {
+	public int compareTo(Branch other) {
 		
 		if(this.tests.size() > other.tests.size()) {
 			return 1;
