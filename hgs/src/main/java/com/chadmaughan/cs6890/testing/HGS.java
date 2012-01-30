@@ -1,4 +1,4 @@
-package com.chadmaughan.cs6890;
+package com.chadmaughan.cs6890.testing;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -18,8 +18,12 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 
-import com.chadmaughan.cs6890.model.Branch;
+import com.chadmaughan.cs6890.testing.model.Branch;
 
+/**
+ * Implementation of algorithm for Hitting Set using the HGS algorithm (Harrold, Gupta, Soffa)
+ * @author Chad Maughan
+ */
 public class HGS {
 
 	private static Logger logger = Logger.getLogger(HGS.class.getName());
@@ -30,7 +34,7 @@ public class HGS {
 	private Map<Integer,Branch> data;
 
 	/**
-	 * @param args
+	 * @param input Absolute path of the input file to be processed (ex '-f /tmp/input.txt')
 	 */
 	public static void main(String[] args) {
 		
@@ -72,12 +76,13 @@ public class HGS {
 		int currentCardinality = 1;
 		
 		// read in the input file into the data structures
+		BufferedReader in = null;
 		try {
 			
 			if(logger.isLoggable(Level.INFO))
 				logger.info("Reading file: " + input);
 			
-		    BufferedReader in = new BufferedReader(new FileReader(input));
+		    in = new BufferedReader(new FileReader(input));
 
 		    String line;
 		    while ((line = in.readLine()) != null) {
@@ -118,11 +123,17 @@ public class HGS {
 		    		column++;
 		    	}
 		    }
-		    		
-		    in.close();
 		} 
 		catch (IOException e) {
 			logger.log(Level.SEVERE, "Error reading input file: " + input, e);
+		}
+		finally {
+		    try {
+				in.close();
+			}
+		    catch (IOException e) {
+				logger.log(Level.SEVERE, "Error closing input file: " + input, e);
+			}
 		}
 		
     	// get the maximum cardinality (so we know when to stop)

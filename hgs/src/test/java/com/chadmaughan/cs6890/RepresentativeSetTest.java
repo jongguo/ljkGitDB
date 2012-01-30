@@ -9,7 +9,7 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.chadmaughan.cs6890.model.Branch;
+import com.chadmaughan.cs6890.testing.model.Branch;
 
 public class RepresentativeSetTest {
 

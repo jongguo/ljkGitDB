@@ -1,4 +1,4 @@
-package com.chadmaughan.cs6890.model;
+package com.chadmaughan.cs6890.testing.model;
 
 import java.util.Set;
 import java.util.SortedSet;
