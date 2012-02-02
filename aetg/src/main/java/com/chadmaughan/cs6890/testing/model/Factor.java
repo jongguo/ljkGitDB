@@ -7,6 +7,9 @@ public class Factor {
 	private int number;
 	private List<Integer> levels;
 
+	public Factor() {
+	}
+
 	public Factor(int number) {
 		this.number = number;
 	}

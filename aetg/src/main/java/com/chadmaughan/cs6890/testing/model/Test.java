@@ -1,14 +1,14 @@
 package com.chadmaughan.cs6890.testing.model;
 
-import java.util.List;
+import java.util.SortedSet;
 
 public class Test implements Comparable<Test> {
 
 	private int coverage;
-	private List<Integer> levels;
+	private SortedSet<Integer> levels;
 	private boolean marked;
 	
-	public Test(List<Integer> levels) {
+	public Test(SortedSet<Integer> levels) {
 		this.levels = levels;
 	}
 	
@@ -20,11 +20,11 @@ public class Test implements Comparable<Test> {
 		this.coverage = coverage;
 	}
 	
-	public List<Integer> getLevels() {
+	public SortedSet<Integer> getLevels() {
 		return levels;
 	}
 	
-	public void setLevels(List<Integer> levels) {
+	public void setLevels(SortedSet<Integer> levels) {
 		this.levels = levels;
 	}
 	
