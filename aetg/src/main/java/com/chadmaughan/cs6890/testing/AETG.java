@@ -4,7 +4,9 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
@@ -17,6 +19,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 
+import com.chadmaughan.cs6890.testing.model.Candidate;
 import com.chadmaughan.cs6890.testing.model.Factor;
 import com.chadmaughan.cs6890.testing.model.Test;
 
@@ -171,7 +174,7 @@ public class AETG {
 		}
 		else {
 			
-			// build the pairs, or whatever coverage is (set to on first file of input)
+			// build the pairs, or whatever the coverage is (set to on first file of input)
 			for(Factor factor : factors) {
 				for(int level : factor.getLevels()) {
 					for(Factor otherFactor : factors) {
@@ -181,13 +184,16 @@ public class AETG {
 									SortedSet<Integer> l = new TreeSet<Integer>();
 									l.add(level);
 									l.add(otherLevel);
-									
+
+									SortedSet<Integer> f = new TreeSet<Integer>();
+									f.add(factor.getNumber());
+									f.add(otherFactor.getNumber());
+
 									Test test = new Test(l);
+									test.setFactors(f);
 									if(!tests.contains(test)) {
 										tests.add(test);
 										logger.info("adding test: " + test.getLevels());
-									}
-									else {
 									}
 								}
 							}
@@ -196,43 +202,109 @@ public class AETG {
 				}
 			}
 			
-			// choose an uncovered test at random
-			int randomNumber = getRandomUnmarkedRow();
+			List<Candidate> candidates = new ArrayList<Candidate>();
+			int candidateCount = 0;
 			
-			// all rows are marked
-			if(randomNumber < 0) {
-				if(logger.isLoggable(Level.INFO))
-					logger.info("All rows are marketd");
-			}
-			else {
-				if(logger.isLoggable(Level.INFO))
-					logger.info("Random row chosen at random: " + tests.get(randomNumber).getLevels());
+			boolean stop = false;
+			while(!stop) {
 
-				// get a random factor
-				Factor randomFactor = getRandomFactor(randomNumber);
+				Candidate candidate = new Candidate(candidateCount);
+				if(logger.isLoggable(Level.INFO))
+					logger.info("Building candidate number: " + candidate.getNumber());
 				
-				// get level covering the most tests
-				getLevelCoveringMostTests(randomFactor);
+				// choose an uncovered test at random
+				int randomNumber = getRandomUnmarkedRow();
+				
+				// all rows are marked
+				if(randomNumber < 0) {
+					if(logger.isLoggable(Level.INFO))
+						logger.info("All rows are marked");
+					stop = true;
+				}
+				else {
+
+					Test test = tests.get(randomNumber);
+					if(logger.isLoggable(Level.INFO))
+						logger.info("Unmarked row chosen at random: " + test.getLevels());
+
+					// add factor to candidate
+					for(int t : test.getLevels()) {
+						candidate.addTest(t, factors);
+					}
+
+					if(logger.isLoggable(Level.INFO))
+						logger.info("Added test to candidate: " + candidate);
+
+					// fill up the candidate with test for each factor
+					for(int i = 0; i < inputTotalFactorCount - test.getLevels().size(); i++) {
+							
+						// get a random factor
+						Factor randomFactor = getRandomFactor(randomNumber);
+						if(logger.isLoggable(Level.INFO))
+							logger.info("Random uncovered factor chosen: " + randomFactor.getNumber());
+						
+						// get level covering the most tests
+						int level = getLevelCoveringMostTests(randomFactor);
+						if(logger.isLoggable(Level.INFO))
+							logger.info("Level covering most tests: " + level);
+						candidate.addTest(level, factors);
+					}
+				}
+				
+				candidates.add(candidate);
+				candidateCount++;
 			}
 		}
 	}
 	
 	private int getLevelCoveringMostTests(Factor factor) {
-		return 0;
+
+		int max = 0;
+		int result = -1;
+
+		Map<Integer,Integer> counts = new HashMap<Integer,Integer>();
+		for(Test test : tests) {
+			if(!test.isMarked()) {
+				for(Integer i : factor.getLevels()) {
+					if(test.getLevels().contains(i)) {
+						Integer count = counts.get(i);
+						if(count == null) {
+							count = 1;
+						}
+						else {
+							count = count + 1;
+						}
+						counts.put(i, count);
+						
+						if(count > max) {
+							max = count;
+							result = i;
+						}
+					}
+				}
+			}
+		}
+		
+		logger.info(counts.keySet() + ", " + counts.values());
+
+		return result;
 	}
 	
 	private Factor getRandomFactor(int random) {
 
+		Test test = tests.get(random);
+		
 		// what factors are covered by the test chosen at random
-		List<Integer> covered = new ArrayList<Integer>();
-		for(int i : tests.get(random).getLevels()) {
-			for(Factor factor : factors) {
-				if(factor.getLevels().contains(i))
-					covered.add(factor.getNumber());
-			}
+		SortedSet<Factor> uncovered = new TreeSet<Factor>();
+		uncovered.addAll(factors);
+
+		for(int f : test.getFactors()) {
+			uncovered.remove(new Factor(f));
 		}
-	
-		return new Factor();
+
+		logger.info("Uncovered factors: " + uncovered);
+		int r = (int) (Math.random() * uncovered.size());
+		return factors.get(r);
 	}
 	
 	private int getRandomUnmarkedRow() {

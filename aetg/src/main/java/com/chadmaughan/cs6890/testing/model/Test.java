@@ -6,6 +6,7 @@ public class Test implements Comparable<Test> {
 
 	private int coverage;
 	private SortedSet<Integer> levels;
+	private SortedSet<Integer> factors;
 	private boolean marked;
 	
 	public Test(SortedSet<Integer> levels) {
@@ -28,6 +29,14 @@ public class Test implements Comparable<Test> {
 		this.levels = levels;
 	}
 	
+	public SortedSet<Integer> getFactors() {
+		return factors;
+	}
+
+	public void setFactors(SortedSet<Integer> factors) {
+		this.factors = factors;
+	}
+
 	public boolean isMarked() {
 		return marked;
 	}
