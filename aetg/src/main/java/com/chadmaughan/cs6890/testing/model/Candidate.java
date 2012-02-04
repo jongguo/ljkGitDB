@@ -9,11 +9,23 @@ import java.util.TreeSet;
 
 public class Candidate {
 
+	/**
+	 * index number - for accessing, sorting, etc
+	 */
 	private int number;
 	
-	// <Factor Number, Factor Level>
+	/**
+	 * The tests that are selected for this candidate.  One
+	 * level per factor number
+	 * 
+	 * SortedMap<Factor Number, Level Number>
+	 */
 	private SortedMap<Integer,Integer> tests;	
 
+	/**
+	 * The number of two-way or three-way tests 
+	 * that are covered by this candidate
+	 */
 	private int coveredTests = 0;
 
 	public Candidate(int number, int factorSize) {

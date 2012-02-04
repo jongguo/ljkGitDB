@@ -4,7 +4,14 @@ import java.util.List;
 
 public class Factor implements Comparable<Factor> {
 
+	/**
+	 * index number - for accessing, sorting, etc
+	 */
 	private int number;
+
+	/**
+	 * levels associated with this factor
+	 */
 	private List<Integer> levels;
 
 	public Factor() {

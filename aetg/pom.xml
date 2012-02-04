@@ -34,11 +34,11 @@
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
 					</descriptorRefs>
-					<finalName>chadmaughan-hw1</finalName>
+					<finalName>chadmaughan-hw2</finalName>
 					<appendAssemblyId>false</appendAssemblyId>
 					<archive>
 						<manifest>
-							<mainClass>com.chadmaughan.cs6890.HGS</mainClass>
+							<mainClass>com.chadmaughan.cs6890.testing.AETG</mainClass>
 						</manifest>
 					</archive>
 				</configuration>

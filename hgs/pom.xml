@@ -33,7 +33,7 @@
 					<appendAssemblyId>false</appendAssemblyId>
 					<archive>
 						<manifest>
-							<mainClass>com.chadmaughan.cs6890.HGS</mainClass>
+							<mainClass>com.chadmaughan.cs6890.testing.HGS</mainClass>
 						</manifest>
 					</archive>
 				</configuration>

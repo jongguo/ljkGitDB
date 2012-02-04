@@ -48,21 +48,29 @@ public class AETG {
 	public static void main(String[] args) {
 
 		// configure java.util.logging single line output
+		Logger logger = Logger.getLogger("com.chadmaughan");
+		logger.setUseParentHandlers(false);
+
 		ConsoleHandler ch = new ConsoleHandler();
 		ch.setFormatter(new LogFormatter());
 
-		Logger logger = Logger.getLogger("com.chadmaughan");
 		logger.addHandler(ch);
-		logger.setLevel(Level.FINE);
+		logger.setLevel(Level.SEVERE);
 
 		try {
 			// add a command line option for file input name
 			Options options = new Options();
 			options.addOption("f", true, "input file to process");
-			options.addOption("v", true, "verbose logging");
+			options.addOption("v", false, "verbose logging");
 
 			CommandLineParser parser = new PosixParser();
 			CommandLine cmd = parser.parse(options, args);
+
+			// verbose output
+			if (cmd.hasOption('v')) {
+				System.out.println("Verbose output");
+				logger.setLevel(Level.FINE);
+			}
 
 			if (cmd.hasOption('f')) {
 				String f = cmd.getOptionValue("f");
@@ -80,9 +88,6 @@ public class AETG {
 				System.out.println(System.getProperty("line.separator") + "example: java -jar chadmaughan-hw2.jar -f /tmp/input.txt" + System.getProperty("line.separator"));
 			}
 			
-			if (cmd.hasOption('v')) {
-				logger.setLevel(Level.FINE);
-			}
 		} 
 		catch (ParseException e) {
 			logger.log(Level.SEVERE, "Error parsing command line option", e);
@@ -337,7 +342,7 @@ public class AETG {
 						}
 						
 						// mark the chosen rows
-						logger.info("enumerated pairs: " + candidate.twoWayTests());
+						logger.info("Enumerated test: " + candidate.twoWayTests());
 						for(Test t : candidate.twoWayTests()) {
 							boolean marked = markCoveredTest(t);
 							if(marked)
