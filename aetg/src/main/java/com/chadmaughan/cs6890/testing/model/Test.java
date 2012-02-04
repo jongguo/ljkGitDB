@@ -6,7 +6,6 @@ public class Test implements Comparable<Test> {
 
 	private int coverage;
 	private SortedSet<Integer> levels;
-	private SortedSet<Integer> factors;
 	private boolean marked;
 	
 	public Test(SortedSet<Integer> levels) {
@@ -29,14 +28,6 @@ public class Test implements Comparable<Test> {
 		this.levels = levels;
 	}
 	
-	public SortedSet<Integer> getFactors() {
-		return factors;
-	}
-
-	public void setFactors(SortedSet<Integer> factors) {
-		this.factors = factors;
-	}
-
 	public boolean isMarked() {
 		return marked;
 	}
@@ -45,9 +36,27 @@ public class Test implements Comparable<Test> {
 		this.marked = marked;
 	}
 
+	public String toString() {
+		return this.levels.toString();
+	}
+	
+	@Override
+	public boolean equals(Object object) {
+	    if(!(object instanceof Test)) 
+	    	 return false;
+
+		if(this.compareTo(((Test) object)) == 0) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+	
 	@Override
 	public int compareTo(Test otherTest) {
-		if(this.getLevels().equals(otherTest.getLevels())) {
+		
+		if(this.getLevels().containsAll(otherTest.getLevels())) {
 			return 0;
 		}
 		else {
