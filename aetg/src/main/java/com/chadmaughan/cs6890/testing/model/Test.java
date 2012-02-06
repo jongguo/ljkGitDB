@@ -4,18 +4,27 @@ import java.util.SortedSet;
 
 public class Test implements Comparable<Test> {
 
+	private String key;
 	private int coverage;
 	private SortedSet<Integer> levels;
 	private boolean marked;
 	
 	public Test(SortedSet<Integer> levels) {
-		this.levels = levels;
+		this.setLevels(levels);
 	}
 	
 	public int getCoverage() {
 		return coverage;
 	}
 	
+	public String getKey() {
+		return key;
+	}
+
+	public void setKey(String key) {
+		this.key = key;
+	}
+
 	public void setCoverage(int coverage) {
 		this.coverage = coverage;
 	}
@@ -25,6 +34,12 @@ public class Test implements Comparable<Test> {
 	}
 	
 	public void setLevels(SortedSet<Integer> levels) {
+		StringBuffer key = new StringBuffer();
+		for(Integer level : levels) {
+			key.append(level);
+			key.append('-');
+		}
+		this.key = key.substring(0, key.length() - 1);
 		this.levels = levels;
 	}
 	
@@ -56,7 +71,7 @@ public class Test implements Comparable<Test> {
 	@Override
 	public int compareTo(Test otherTest) {
 		
-		if(this.getLevels().containsAll(otherTest.getLevels())) {
+		if(this.key.equals(otherTest.getKey())) {
 			return 0;
 		}
 		else {

@@ -37,7 +37,9 @@ public class AETG {
 	private static Logger logger = Logger.getLogger(AETG.class.getName());
 
 	// tests
-	private List<Test> tests;
+	private List<String> testsList;
+	private Map<String,Test> testsMap;
+	private Map<Integer,List<Test>> testsByLevels;
 
 	// built factors
 	private List<Factor> factors;
@@ -107,8 +109,10 @@ public class AETG {
 		factors = new ArrayList<Factor>();
 
 		// tests
-		tests = new ArrayList<Test>();
-		
+		testsList = new ArrayList<String>();
+		testsMap = new HashMap<String,Test>();
+		testsByLevels = new HashMap<Integer,List<Test>>();
+
 		// read the input file into the data structures
 		BufferedReader in = null;
 		try {
@@ -215,20 +219,38 @@ public class AETG {
 				if(logger.isLoggable(Level.INFO))
 					logger.info("Two-way covering array specified in input file");
 					
-				for(Factor factor : factors) {
-					for(int level : factor.getLevels()) {
-						for(Factor otherFactor : factors) {
-							if(factor.getNumber() != otherFactor.getNumber()) {
-								for(int otherLevel : otherFactor.getLevels()) {
-									if(level != otherLevel) {
+				for(Factor firstFactor : factors) {
+					for(Factor secondFactor : factors) {
+
+						if(firstFactor.getNumber() != secondFactor.getNumber()) {
+
+							for(int firstLevel : firstFactor.getLevels()) {
+								for(int secondLevel : secondFactor.getLevels()) {
+							
+									if(firstLevel != secondLevel) {
 										SortedSet<Integer> l = new TreeSet<Integer>();
-										l.add(level);
-										l.add(otherLevel);
+										l.add(firstLevel);
+										l.add(secondLevel);
 	
 										Test test = new Test(l);
-										if(!tests.contains(test)) {
-											tests.add(test);
-											logger.info("Adding two-way test: " + test.getLevels());
+										
+										// add to tests collection indexed by level they contain
+										for(Integer level : l) {
+											List<Test> tests = testsByLevels.get(level);
+											if(tests == null)
+												tests = new ArrayList<Test>();
+											
+											if(!tests.contains(test)) {
+												tests.add(test);
+											}
+											
+											testsByLevels.put(level, tests);
+										}
+										testsMap.put(test.getKey(), test);
+										if(!testsList.contains(test.getKey())) {
+											testsList.add(test.getKey());
+											if(logger.isLoggable(Level.INFO))
+												logger.info("Adding two-way test: " + test.getLevels());
 										}
 									}
 								}
@@ -258,9 +280,11 @@ public class AETG {
 												l.add(thirdLevel);
 			
 												Test test = new Test(l);
-												if(!tests.contains(test)) {
-													tests.add(test);
-													logger.info("Adding three-way test: " + test.getLevels());
+												testsMap.put(test.getKey(), test);
+												if(!testsList.contains(test.getKey())) {
+													testsList.add(test.getKey());
+													if(logger.isLoggable(Level.INFO))
+														logger.info("Adding three-way test: " + test.getLevels());
 												}
 											}
 										}
@@ -312,7 +336,8 @@ public class AETG {
 					}
 					else {
 	
-						Test test = tests.get(randomNumber);
+						String key = testsList.get(randomNumber);
+						Test test = testsMap.get(key);
 						if(logger.isLoggable(Level.INFO))
 							logger.info("Unmarked row chosen at random: " + test.getLevels());
 	
@@ -378,7 +403,7 @@ public class AETG {
 				runStatistics.addValue((double) diff);
 				
 				// reset the marked tests (should be all of them)
-				for(Test test : tests) {
+				for(Test test : testsMap.values()) {
 					test.setMarked(false);
 				}
 			}
@@ -403,7 +428,7 @@ public class AETG {
 	private void logUnmarkedTests() {
 		List<Test> unmarked = new ArrayList<Test>();
 		
-		for(Test test : tests) {
+		for(Test test : testsMap.values()) {
 			if(!test.isMarked()) {
 				unmarked.add(test);
 			}
@@ -417,17 +442,14 @@ public class AETG {
 	
 	private boolean markCoveredTest(Test test) {
 		boolean marked = false;
-		for(Test t : tests) {
-			if(t.equals(test)) {
-				if(!t.isMarked()) {
-					t.setMarked(true);
-					marked = true;
-					if(logger.isLoggable(Level.INFO))
-						logger.info("Test marked: " + t);
-					break;
-				}
-			}
+		if(testsMap.get(test.getKey()).isMarked()) {
+			marked = true;
 		}
+
+		testsMap.get(test.getKey()).setMarked(true);
+		if(logger.isLoggable(Level.INFO))
+			logger.info("Test marked: " + test);
+
 		return marked;
 	}
 	
@@ -437,22 +459,20 @@ public class AETG {
 		int result = -1;
 
 		Map<Integer,Integer> counts = new HashMap<Integer,Integer>();
-		for(Test test : tests) {
-			if(!test.isMarked()) {
-				for(Integer i : factor.getLevels()) {
-					if(test.getLevels().contains(i)) {
-						Integer count = counts.get(i);
-						if(count == null) {
-							count = 1;
-						}
-						else {
-							count = count + 1;
-						}
-						counts.put(i, count);
-						
-						if(count > max) {
-							max = count;
-						}
+		for(Integer i : factor.getLevels()) {
+			for(Test t : testsByLevels.get(i)) {
+				if(!t.isMarked()) {
+					Integer count = counts.get(i);
+					if(count == null) {
+						count = 1;
+					}
+					else {
+						count = count + 1;
+					}
+					counts.put(i, count);
+					
+					if(count > max) {
+						max = count;
 					}
 				}
 			}
@@ -510,20 +530,22 @@ public class AETG {
 		
 		// choose an uncovered test at random, start at the random number and work your
 		// way up until you can find one
-		int random = (int) (Math.random() * tests.size());
+		int random = (int) (Math.random() * testsList.size());
 
-		if(!tests.get(random).isMarked()) {
+		String key = testsList.get(random);
+		if(!testsMap.get(key).isMarked()) {
 			rowIndex = random;
 		}
 		else {
 			int count = random;
-			for(int i = 0; i < tests.size(); i++) {
-				if(!tests.get(count).isMarked()) {
+			for(int i = 0; i < testsMap.values().size(); i++) {
+				String k = testsList.get(count);
+				if(!testsMap.get(k).isMarked()) {
 					rowIndex = i;
 					break;
 				}
 				else {
-					if(count == tests.size() - 1) {
+					if(count == testsMap.values().size() - 1) {
 						count = 0;
 					}
 					else {

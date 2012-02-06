@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -18,6 +19,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 
+import com.chadmaughan.cs6890.testing.log.LogFormatter;
 import com.chadmaughan.cs6890.testing.model.Branch;
 
 /**
@@ -38,15 +40,32 @@ public class HGS {
 	 */
 	public static void main(String[] args) {
 		
+		// configure java.util.logging single line output
+		Logger logger = Logger.getLogger("com.chadmaughan");
+		logger.setUseParentHandlers(false);
+
+		ConsoleHandler ch = new ConsoleHandler();
+		ch.setFormatter(new LogFormatter());
+
+		logger.addHandler(ch);
+		logger.setLevel(Level.SEVERE);
+
 		try {
 			
 			// add a command line option for file input name
 			Options options = new Options();
 			options.addOption("f", true, "input file to process");
-			
+			options.addOption("v", false, "verbose logging");
+
 			CommandLineParser parser = new PosixParser();
 			CommandLine cmd = parser.parse( options, args);
-			
+
+			// verbose output
+			if (cmd.hasOption('v')) {
+				System.out.println("Verbose output");
+				logger.setLevel(Level.FINE);
+			}
+
 			if(cmd.hasOption('f')) {
 				String f = cmd.getOptionValue("f");
 				new HGS(f);
