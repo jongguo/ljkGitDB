@@ -54,11 +54,6 @@ public class LegoCrawlExample {
 
 				    // select the brand so the building instructions load
 			        option.click();
-			        new Wait("Couldn't find close button!") {
-			            boolean until() {
-			                return selenium.isElementPresent("button_Close");
-			            }
-			        };
 	
 			        WebElement countInstructionsElement = browser.findElementById("ctl00_ContentPlaceHolder1_SelectBIListBox");
 			        List<WebElement> countInstructionsOptionList = countInstructionsElement.findElements(By.tagName("option"));
