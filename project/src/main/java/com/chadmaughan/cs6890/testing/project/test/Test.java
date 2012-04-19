@@ -21,6 +21,7 @@ import org.browsermob.core.har.Har;
 import org.browsermob.proxy.ProxyServer;
 import org.eclipse.jetty.http.HttpStatus;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.kernel.EmbeddedGraphDatabase;
 import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -30,22 +31,31 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 public class Test {
 	
 	private static Logger logger = Logger.getLogger(Test.class.getName());
-	
+
+	private static final String GRAPHDB_PATH = "/tmp/example.db";
+
 	private List<String> httpErrors;
 	
 	private WebDriver driver;
 	private GraphDatabaseService gds;
 
 	public static void main(String[] args) {
-		new Test();
+		List<String> urls = new ArrayList<String>();
+		urls.add("http://coenraets.org/backbone/directory/jquerymobile/#employees/1");
+		urls.add("http://coenraets.org/backbone/directory/jquerymobile/#employees/1/reports");
+		urls.add("http://coenraets.org/backbone/directory/jquerymobile/#employees/3");
+		new Test(urls);
 	}
 	
-	public Test() {
+	public Test(List<String> urls) {
 		
 		ProxyServer server = null;
 		httpErrors = new ArrayList<String>();
 
 		try {
+
+			// create neo4j database
+			gds = new EmbeddedGraphDatabase(GRAPHDB_PATH);
 
 			// read in the javascript error file
 			final String js = readJavascript();
@@ -56,7 +66,7 @@ public class Test {
 			server.addRequestInterceptor(new HttpRequestInterceptor() {
 				@Override
 				public void process(HttpRequest httpRequest, HttpContext httpContext) throws HttpException, IOException {
-					// not used, but potentially useful
+					logger.info("Request intercepted: " + httpRequest.getRequestLine());
 				}
 			});
 			
@@ -66,15 +76,14 @@ public class Test {
 
 					// log anything that isn't 200
 					if(httpResponse.getStatusLine().getStatusCode() != HttpStatus.OK_200) {
+						logger.info("Error: " + httpResponse.getStatusLine().getStatusCode());
 						httpErrors.add("Error");
 					}
 					
-					String html = EntityUtils.toString(httpResponse.getEntity());
-					html = html.replace("<head>", "<head>" + js);
-
-					System.out.println(httpResponse.getEntity().isStreaming());
-					System.out.println(httpResponse.getEntity().isChunked());
-					System.out.println(httpResponse.getEntity().isRepeatable());
+//					String html = EntityUtils.toString(httpResponse.getEntity());
+//					html = html.replace("<head>", "<head>" + js);
+//
+//					System.out.println(httpResponse.getEntity().isStreaming());
 				}
 			});
 			
@@ -86,6 +95,11 @@ public class Test {
 			capabilities.setCapability(CapabilityType.PROXY, proxy);
 			
 			driver = new FirefoxDriver(capabilities);
+
+			// loop through the urls
+			for(String url : urls) {
+				driver.get(url);
+			}
 			
 			// create a new HAR with the label "yahoo.com"
 			server.newHar("com.chadmaughan");
@@ -93,6 +107,7 @@ public class Test {
 			// get the HAR data
 			Har har = server.getHar();
 			har.writeTo(new FileWriter("/tmp/crawl-har.json"));
+
 		} 
 		catch (Exception e) {
 			logger.log(Level.SEVERE, "Error", e);

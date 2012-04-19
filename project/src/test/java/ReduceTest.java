@@ -117,6 +117,7 @@ public class ReduceTest {
 			stats.addValue((g.edgesOf(s).size() - 1));
 		}
 
+		// TODO prune branches for nodes who are candidates for reduction
 		double stddev = stats.getStandardDeviation();
 		System.out.println(stddev * 2);
 		for(String s : g.vertexSet()) {
