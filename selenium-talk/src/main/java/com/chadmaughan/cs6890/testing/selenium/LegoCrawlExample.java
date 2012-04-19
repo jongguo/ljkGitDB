@@ -5,6 +5,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.Point;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 
@@ -35,12 +36,16 @@ public class LegoCrawlExample {
 			// find the 'Select a brand' element
 			// just to get the count initially, due to the dynamic nature of the site, it requires us to search on each page load
 			WebElement countBrandElement = browser.findElementById("ctl00_ContentPlaceHolder1_selectBrand");
+		    Point point = countBrandElement.getLocation();
+		    System.out.println("x: " + point.x + ", y: " + point.y);
 			List<WebElement> countBrandOptionList = countBrandElement.findElements(By.tagName("option"));
 
 			for(int i = 0; i < countBrandOptionList.size(); i++) {
 
 			    // search for the 'Select a brand' element again
 			    WebElement brandElement = browser.findElementById("ctl00_ContentPlaceHolder1_selectBrand");
+			    point = brandElement.getLocation();
+			    System.out.println("x: " + point.x + ", y: " + point.y);
 			    List<WebElement> brandOptionList = brandElement.findElements(By.tagName("option"));
 
 			    // get the next option
@@ -56,6 +61,8 @@ public class LegoCrawlExample {
 			        option.click();
 	
 			        WebElement countInstructionsElement = browser.findElementById("ctl00_ContentPlaceHolder1_SelectBIListBox");
+				    point = countInstructionsElement.getLocation();
+				    System.out.println("x: " + point.x + ", y: " + point.y);
 			        List<WebElement> countInstructionsOptionList = countInstructionsElement.findElements(By.tagName("option"));
 	
 			        for(int j = 0; j < countInstructionsOptionList.size(); j++) {
@@ -66,6 +73,8 @@ public class LegoCrawlExample {
 	
 			        		// now search for the building instructions multi-select element
 				            WebElement instructionsElement = browser.findElementById("ctl00_ContentPlaceHolder1_SelectBIListBox");
+						    point = instructionsElement.getLocation();
+						    System.out.println("x: " + point.x + ", y: " + point.y);
 				            List<WebElement> instructionsOptionList = instructionsElement.findElements(By.tagName("option"));
 		
 				            WebElement oo = instructionsOptionList.get(j);
@@ -80,6 +89,8 @@ public class LegoCrawlExample {
 		
 				            // get the size (in Mb) from the description
 			                WebElement sizeElement = browser.findElementById("ctl00_ContentPlaceHolder1_ctl00_NoOfMBLabel");
+						    point = sizeElement.getLocation();
+						    System.out.println("x: " + point.x + ", y: " + point.y);
 			                float size = Float.parseFloat(sizeElement.getText());
 			                if(logger.isLoggable(Level.INFO)) {
 			                	logger.info("Instruction size: " + size);
