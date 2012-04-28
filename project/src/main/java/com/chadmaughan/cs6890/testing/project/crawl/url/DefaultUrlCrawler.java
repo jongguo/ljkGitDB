@@ -12,7 +12,7 @@ public class DefaultUrlCrawler extends AbstractUrlCrawler {
 	
 	private int depth = 3;
 	
-	private long DEFAULT_PAGE_PROCESSING_DELAY = 2000;
+	private long DEFAULT_PAGE_PROCESSING_DELAY = 1000;
 
 	private String strategy = UrlCrawler.DEPTH_FIRST_STRATEGY;
 

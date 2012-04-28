@@ -22,6 +22,7 @@ import org.browsermob.proxy.ProxyServer;
 import org.eclipse.jetty.http.HttpStatus;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.kernel.EmbeddedGraphDatabase;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -80,10 +81,10 @@ public class Test {
 						httpErrors.add("Error");
 					}
 					
-//					String html = EntityUtils.toString(httpResponse.getEntity());
-//					html = html.replace("<head>", "<head>" + js);
-//
-//					System.out.println(httpResponse.getEntity().isStreaming());
+					String html = EntityUtils.toString(httpResponse.getEntity());
+					html = html.replace("<head>", "<head>" + js);
+
+					System.out.println(httpResponse.getEntity().isStreaming());
 				}
 			});
 			
@@ -99,6 +100,12 @@ public class Test {
 			// loop through the urls
 			for(String url : urls) {
 				driver.get(url);
+
+				// get any JS errors from the page
+				((JavascriptExecutor) driver).executeScript("return window.jsErrors");
+				
+				// TODO - display JS errors to the user
+				
 			}
 			
 			// create a new HAR with the label "yahoo.com"
